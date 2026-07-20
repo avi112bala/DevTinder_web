@@ -16,8 +16,8 @@ const NavBar = () => {
                 withCredentials: true
             })
             if (res?.status === 200) {
-                dispatch(removeUser(null))
-                dispatch(removeFeed(null))
+                dispatch(removeUser())
+                dispatch(removeFeed())
                 Navigate("/login")
             }
         } catch (error) {
