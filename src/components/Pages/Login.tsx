@@ -3,6 +3,7 @@ import { useState } from "react"
 import { useDispatch } from "react-redux"
 import { addUser } from "../../utils/userSlice"
 import { useNavigate } from "react-router-dom"
+import { BASE_URL } from "../../utils/Baseurl"
 
 const Login = () => {
     const [email, setEmail] = useState("sarvani@gmail.com")
@@ -16,7 +17,7 @@ const Login = () => {
 
     const handleLogin = async () => {
         try {
-            const res = await axios.post("http://localhost:3000/login", {
+            const res = await axios.post(`${BASE_URL}/login`, {
                 emailId: email,
                 password
             },
@@ -33,14 +34,18 @@ const Login = () => {
 
      const handleSignup = async () => {
         try {
-            const res = await axios.post("http://localhost:3000/signup", {
+            const res = await axios.post(
+              `${BASE_URL}/signup`,
+              {
                 firstName,
                 lastName,
                 emailId: email,
                 password,
-                photoUrl:"https://cdn.vectorstock.com/i/500p/81/62/grey-business-avatar-placeholder-vector-38508162.jpg",
-            },
-                { withCredentials: true })                
+                photoUrl:
+                  "https://cdn.vectorstock.com/i/500p/81/62/grey-business-avatar-placeholder-vector-38508162.jpg",
+              },
+              { withCredentials: true },
+            );                
             if (res?.status === 200) {
                 dispatch(addUser(res?.data?.data))
                 navigate('/profile')
