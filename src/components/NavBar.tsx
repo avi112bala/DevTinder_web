@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { addUser, removeUser } from "../utils/userSlice";
 import { removeFeed } from "../utils/feedSlice";
 import { useEffect } from "react";
+import { BASE_URL } from "../utils/Baseurl";
 
 const NavBar = () => {
     const user = useSelector((store: any) => store.user)
@@ -12,7 +13,7 @@ const NavBar = () => {
 
     const logout = async () => {
         try {
-            const res = await axios.post(`${import.meta.env.VITE_BASE_URL}/logout`, null, {
+            const res = await axios.post(`${BASE_URL}/logout`, null, {
                 withCredentials: true
             })
             if (res?.status === 200) {

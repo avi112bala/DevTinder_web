@@ -6,6 +6,7 @@ import axios from "axios";
 import { useEffect } from "react";
 import Feed from "./components/Pages/Feed";
 import { addfeed } from "./utils/feedSlice";
+import { BASE_URL } from "./utils/Baseurl";
 
 const Body = () => {
     const dispatch = useDispatch()
@@ -17,7 +18,7 @@ const Body = () => {
 
     const fetchFeed = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/feed`, {
+            const res = await axios.get(`${BASE_URL}/feed`, {
                 withCredentials: true
             })
             dispatch(addfeed(res?.data?.user))

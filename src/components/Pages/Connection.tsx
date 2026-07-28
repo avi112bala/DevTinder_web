@@ -2,6 +2,7 @@ import axios from "axios";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addConnection } from "../../utils/connectionSlice";
+import { BASE_URL } from "../../utils/Baseurl";
 
 const Connection = () => {
     const dispatch = useDispatch()
@@ -9,7 +10,7 @@ const Connection = () => {
 
     const allConnection = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/user/connection`, {
+            const res = await axios.get(`${BASE_URL}/user/connection`, {
                 withCredentials: true
             })
             console.log(res, "connectionres");

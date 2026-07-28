@@ -2,6 +2,7 @@ import axios from "axios";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addRequest, removeRequest } from "../../utils/requestSlice";
+import { BASE_URL } from "../../utils/Baseurl";
 
 const RequestReceive = () => {
     const dispatch = useDispatch()
@@ -9,7 +10,7 @@ const RequestReceive = () => {
 
     const allConnection = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/users/request/received`, {
+            const res = await axios.get(`${BASE_URL}/users/request/received`, {
                 withCredentials: true
             })            
             if (res?.status === 200) {
@@ -23,7 +24,7 @@ const RequestReceive = () => {
 
     const connectionacceptreject=async(status:any,_id:any)=>{
       try {
-          const res =await axios.post(`${import.meta.env.VITE_BASE_URL+"/request/review/"+status+"/"+_id}`,{},{
+          const res =await axios.post(`${BASE_URL+"/request/review/"+status+"/"+_id}`,{},{
             withCredentials:true
         })
         if(res?.status===200){

@@ -2,6 +2,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { BASE_URL } from "../../utils/Baseurl";
 
 interface ProfileData {
   _id: string;
@@ -30,7 +31,7 @@ const Profile = () => {
   const { data, isError, isLoading } = useQuery<ProfileData>({
     queryKey: ["profile"],
     queryFn: async () => {
-      const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/profile`, {
+      const res = await axios.get(`${BASE_URL}/profile`, {
         withCredentials: true,
       });
       return res.data.data;
@@ -57,7 +58,7 @@ const Profile = () => {
   const handleProfileUpdate = async () => {
     try {
       const res = await axios.patch(
-        `${import.meta.env.VITE_BASE_URL}/profile/edit`,
+        `${BASE_URL}/profile/edit`,
         { firstName, lastName, emailId, about, photoUrl, age, gender, userId },
         { withCredentials: true },
       );

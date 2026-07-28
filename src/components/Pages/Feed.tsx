@@ -1,13 +1,14 @@
 import axios from "axios"
 import { useDispatch } from "react-redux"
 import { removeprevFeed } from "../../utils/feedSlice"
+import { BASE_URL } from "../../utils/Baseurl"
 
 const Feed = ({ feedData }: any) => {
     const dispatch = useDispatch()    
 
     const connectionacceptreject = async (status: any, _id: any) => {
         try {
-            const res = await axios.post(`${import.meta.env.VITE_BASE_URL + "/request/send/" + status + "/" + _id}`, {}, {
+            const res = await axios.post(`${BASE_URL + "/request/send/" + status + "/" + _id}`, {}, {
                 withCredentials: true
             })
             if (res?.status === 200) {
