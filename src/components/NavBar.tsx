@@ -37,13 +37,11 @@ const NavBar = () => {
 
     const fetchUSer = async () => {
         try {
-
-            const res = await axios.get('http://localhost:3000/profile', {
+            const res = await axios.get(`${BASE_URL}/profile`, {
                 withCredentials: true
             })
             if (res?.status === 200) {
                 dispatch(addUser(res?.data?.data))
-
             }
         } catch (error) {
             console.log(error);

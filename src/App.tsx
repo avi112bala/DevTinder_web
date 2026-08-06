@@ -7,25 +7,36 @@ import appStore from './utils/appStore'
 import Profile from './components/Pages/Profile'
 import Connection from './components/Pages/Connection'
 import RequestReceive from './components/Pages/RequestReceive'
+ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 function App() {
+ 
+  const queryClient = new QueryClient();
 
   return (
     <>
-      <Provider store={appStore}>
-        <BrowserRouter basename='/'>
-          <Routes>
-            <Route path='/' element={<Body />}>
-              <Route path='/login' element={<div className='flex item-center justify-center mt-4'><Login /></div>} />
-              <Route path='/profile' element={<Profile />} />
-              <Route path='/connection' element={<Connection />} />
-              <Route path='/request' element={<RequestReceive />} />
-            </Route>
-
-          </Routes>
-        </BrowserRouter>
-      </Provider>
+      <QueryClientProvider client={queryClient}>
+        <Provider store={appStore}>
+          <BrowserRouter basename="/">
+            <Routes>
+              <Route path="/" element={<Body />}>
+                <Route
+                  path="/login"
+                  element={
+                    <div className="flex item-center justify-center mt-4">
+                      <Login />
+                    </div>
+                  }
+                />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/connection" element={<Connection />} />
+                <Route path="/request" element={<RequestReceive />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </Provider>
+      </QueryClientProvider>
     </>
-  )
+  );
 }
 
 export default App
