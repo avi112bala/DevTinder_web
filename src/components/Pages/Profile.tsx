@@ -1,209 +1,135 @@
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { BASE_URL } from "../../utils/Baseurl";
-
-interface ProfileData {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  emailId: string;
-  about: string;
-  photoUrl: string;
-  age: string;
-  gender: string;
-}
+import { useEffect, useState } from 'react'
+import { useProfile, useUpdateProfile } from '../../hooks/useApiHooks'
 
 const Profile = () => {
-  const [firstName, setfirstName] = useState("");
-  const [lastName, setlastName] = useState("");
-  const [emailId, setemailId] = useState("");
-  const [about, setabout] = useState("");
-  const [photoUrl, setphotoUrl] = useState("");
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState("");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [userId, setuserId] = useState("");
-  const navigate = useNavigate();
+  const [firstName, setfirstName] = useState('')
+  const [lastName, setlastName] = useState('')
+  const [emailId, setemailId] = useState('')
+  const [about, setabout] = useState('')
+  const [photoUrl, setphotoUrl] = useState('')
+  const [age, setAge] = useState('')
+  const [gender, setGender] = useState('')
+  const [userId, setuserId] = useState('')
 
-  const { data, isError, isLoading } = useQuery<ProfileData>({
-    queryKey: ["profile"],
-    queryFn: async () => {
-      const res = await axios.get(`${BASE_URL}/profile`, {
-        withCredentials: true,
-      });
-      return res.data.data;
-    },
-  });
+  const { data, isLoading } = useProfile()
+  const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile()
 
   useEffect(() => {
-    if (isError) navigate("/login");
-  }, [isError, navigate]);
-
-  // Sync fetched profile into local editable state once it arrives
-  useEffect(() => {
-    if (!data) return;
-    setfirstName(data.firstName ?? "");
-    setlastName(data.lastName ?? "");
-    setemailId(data.emailId ?? "");
-    setabout(data.about ?? "");
-    setphotoUrl(data.photoUrl ?? "");
-    setAge(data.age ?? "");
-    setGender(data.gender ?? "");
-    setuserId(data._id ?? "");
-  }, [data]);
-
-  const handleProfileUpdate = async () => {
-    try {
-      const res = await axios.patch(
-        `${BASE_URL}/profile/edit`,
-        { firstName, lastName, emailId, about, photoUrl, age, gender, userId },
-        { withCredentials: true },
-      );
-
-      if (res?.status === 200) {
-        setMessage(res?.data?.message);
-        setTimeout(() => {
-          setMessage("");
-        }, 2000);
-      }
-    } catch (err) {
-      const msg = axios.isAxiosError(err)
-        ? (err.response?.data?.message ??
-          "Something went wrong. Please try again.")
-        : "Something went wrong. Please try again.";
-      setError(msg);
-      setTimeout(() => setError(""), 3000);
-    }
-  };
+    if (!data) return
+    setfirstName(data.firstName ?? '')
+    setlastName(data.lastName ?? '')
+    setemailId(data.emailId ?? '')
+    setabout(data.about ?? '')
+    setphotoUrl(data.photoUrl ?? '')
+    setAge(data.age ?? '')
+    setGender(data.gender ?? '')
+    setuserId(data._id ?? '')
+  }, [data])
 
   if (isLoading) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <span className="loading loading-spinner loading-lg text-white" />
+      <div className="loading-screen">
+        <div className="loading-text">Loading your profile…</div>
       </div>
-    );
+    )
   }
 
+  const formFields = [
+    { label: 'First Name', value: firstName, setter: setfirstName, type: 'text', placeholder: 'First name' },
+    { label: 'Last Name', value: lastName, setter: setlastName, type: 'text', placeholder: 'Last name' },
+    { label: 'About', value: about, setter: setabout, type: 'text', placeholder: 'Tell developers about yourself…' },
+    { label: 'Photo URL', value: photoUrl, setter: setphotoUrl, type: 'url', placeholder: 'https://…' },
+    { label: 'Email', value: emailId, setter: setemailId, type: 'email', placeholder: 'you@example.com' },
+    { label: 'Age', value: age, setter: setAge, type: 'text', placeholder: 'e.g. 26' },
+    { label: 'Gender', value: gender, setter: setGender, type: 'text', placeholder: 'e.g. Male / Female / Other' },
+  ]
+
   return (
-    <div className="w-full h-screen">
-      <label className="label justify-center text-white text-2xl mt-1">
-        Edit Profile
-      </label>
-      <div className="flex gap-4 items-center justify-center w-full">
-        <div className="bg-white border-base-300 rounded-lg w-xs p-2">
-          <label className="label text-start">First Name</label>
-          <input
-            type="text"
-            className="input bg-red-100!"
-            placeholder="First Name"
-            value={firstName}
-            onChange={(e) => setfirstName(e.target.value)}
-          />
+    <div className="profile-page">
+      {/* Header */}
+      <div className="section-badge">✏️ Edit Profile</div>
+      <div className="profile-page-title">
+        <span className="flame-text">Your Profile</span>
+      </div>
 
-          <label className="label">Last Name</label>
-          <input
-            type="text"
-            className="input bg-red-100!"
-            placeholder="Last Name"
-            value={lastName}
-            onChange={(e) => setlastName(e.target.value)}
-          />
+      <div className="profile-grid">
+        {/* Form */}
+        <div className="profile-form-card">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            {formFields.slice(0, 2).map(f => (
+              <div key={f.label} className="form-group">
+                <label>{f.label}</label>
+                <input
+                  type={f.type}
+                  className="form-input"
+                  placeholder={f.placeholder}
+                  value={f.value}
+                  onChange={e => f.setter(e.target.value)}
+                />
+              </div>
+            ))}
+          </div>
 
-          <label className="label">About</label>
-          <input
-            type="text"
-            className="input bg-red-100!"
-            placeholder="About"
-            value={about}
-            onChange={(e) => setabout(e.target.value)}
-          />
+          {formFields.slice(2).map(f => (
+            <div key={f.label} className="form-group">
+              <label>{f.label}</label>
+              <input
+                type={f.type}
+                className="form-input"
+                placeholder={f.placeholder}
+                value={f.value}
+                onChange={e => f.setter(e.target.value)}
+              />
+            </div>
+          ))}
 
-          <label className="label">Profile Pic</label>
-          <input
-            type="text"
-            className="input bg-red-100!"
-            placeholder="Profile Pic"
-            value={photoUrl}
-            onChange={(e) => setphotoUrl(e.target.value)}
-          />
-
-          <label className="label">Email</label>
-          <input
-            type="email"
-            className="input bg-red-100!"
-            placeholder="Email"
-            value={emailId}
-            onChange={(e) => setemailId(e.target.value)}
-          />
-
-          <label className="label">Age</label>
-          <input
-            type="text"
-            inputMode="numeric"
-            className="input bg-red-100!"
-            placeholder="Age"
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-          />
-
-          <label className="label">Gender</label>
-          <input
-            type="text"
-            className="input bg-red-100!"
-            placeholder="Gender"
-            value={gender}
-            onChange={(e) => setGender(e.target.value)}
-          />
-
-          <button
-            className="btn btn-neutral mt-4"
-            onClick={handleProfileUpdate}
-          >
-            Update Profile
-          </button>
+          <div style={{ marginTop: '8px', display: 'flex', gap: '12px' }}>
+            <button
+              className="btn-flame"
+              style={{ flex: 1 }}
+              disabled={isUpdating}
+              onClick={() => updateProfile({ firstName, lastName, emailId, about, photoUrl, age, gender, userId })}
+            >
+              {isUpdating ? (
+                <>
+                  <div className="flame-spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                  Saving…
+                </>
+              ) : '💾 Save Changes'}
+            </button>
+          </div>
         </div>
 
-        <div className="bg-base-300 w-xs p-2">
-          <div className="card bg-base-100 w-96 shadow-sm">
-            <figure>
-              <img
-                src={photoUrl}
-                alt={`${firstName}'s profile`}
-                className="w-full h-65 object-cover"
-              />
-            </figure>
-            <div className="card-body">
-              <h2 className="card-title items-center">{firstName}</h2>
-              <p className="flex items-start">About: {about}</p>
-              <p className="flex items-start">Email: {emailId}</p>
-              <p className="flex items-start">Age: {age}</p>
-              <p className="flex items-start">Gender: {gender}</p>
-              <div className="card-actions justify-center">
-                <button className="btn btn-primary">Ignore</button>
-                <button className="btn btn-secondary">Interested</button>
+        {/* Preview Card */}
+        <div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>
+            Preview
+          </div>
+          <div className="swipe-card" style={{ width: '100%', height: '500px' }}>
+            <img
+              className="swipe-card-img"
+              src={photoUrl || 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'}
+              alt="Preview"
+            />
+            <div className="swipe-card-overlay" />
+            <div className="swipe-card-info" style={{ paddingBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                <span className="swipe-card-name">{firstName || 'Your Name'}</span>
+                {age && <span className="swipe-card-age">{age}</span>}
               </div>
+              {gender && <span className="swipe-card-tag">{gender}</span>}
+              {about && <p className="swipe-card-bio">{about}</p>}
+              {emailId && (
+                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginTop: '6px' }}>
+                  ✉️ {emailId}
+                </p>
+              )}
             </div>
           </div>
         </div>
       </div>
-
-      <div className="toast toast-top toast-end">
-        {message && (
-          <div className="alert alert-success">
-            <span>{message}</span>
-          </div>
-        )}
-        {error && (
-          <div className="alert alert-error">
-            <span>{error}</span>
-          </div>
-        )}
-      </div>
     </div>
-  );
-};
+  )
+}
 
-export default Profile;
+export default Profile

@@ -1,47 +1,85 @@
-import axios from "axios"
-import { useDispatch } from "react-redux"
-import { removeprevFeed } from "../../utils/feedSlice"
-import { BASE_URL } from "../../utils/Baseurl"
+import { useSendConnectionRequest } from '../../hooks/useApiHooks'
 
 const Feed = ({ feedData }: any) => {
-    const dispatch = useDispatch()    
+  const { mutate: sendRequest, isPending } = useSendConnectionRequest()
 
-    const connectionacceptreject = async (status: any, _id: any) => {
-        try {
-            const res = await axios.post(`${BASE_URL + "/request/send/" + status + "/" + _id}`, {}, {
-                withCredentials: true
-            })
-            if (res?.status === 200) {
-                dispatch(removeprevFeed(feedData?._id))
-            }
-        } catch (error) {
-            console.log(error)
-        }
-
-    }
-
-
+  if (!feedData) {
     return (
-        <>
-            <div className="card bg-base-100 w-96 shadow-sm">
-                <figure>
-                    <img
-                        src={feedData?.photoUrl}
-                        alt="Shoes"
-                        className="w-full h-65"
-                    />
-                </figure>
-                <div className="card-body">
-                    <h2 className="card-title items-center">{feedData?.firstName}</h2>
-                    <p className="flex items-start">{feedData?.about}</p>
-                    <div className="card-actions justify-center">
-                        <button className="btn btn-primary cursor-pointer" onClick={() => connectionacceptreject("ignored", feedData?._id)}>Ignore</button>
-                        <button className="btn btn-secondary cursor-pointer" onClick={() => connectionacceptreject("interested", feedData?._id)}>Interested</button>
-                    </div>
-                </div>
-            </div>
-        </>
+      <div className="empty-state" style={{ minHeight: '460px' }}>
+        <div className="empty-state-icon">🎉</div>
+        <div className="empty-state-title">You're all caught up!</div>
+        <div className="empty-state-sub">Come back later to discover more developers</div>
+      </div>
     )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+      {/* Card */}
+      <div className="swipe-card">
+        <img
+          className="swipe-card-img"
+          src={feedData?.photoUrl ?? 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'}
+          alt={feedData?.firstName}
+        />
+        <div className="swipe-card-overlay" />
+
+        {/* Info overlay */}
+        <div className="swipe-card-info">
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <span className="swipe-card-name">{feedData?.firstName}</span>
+            {feedData?.age && <span className="swipe-card-age">{feedData.age}</span>}
+          </div>
+
+          {feedData?.gender && (
+            <span className="swipe-card-tag">
+              {feedData.gender === 'male' ? '♂' : feedData.gender === 'female' ? '♀' : '⚧'} {feedData.gender}
+            </span>
+          )}
+
+          {feedData?.about && (
+            <p className="swipe-card-bio">{feedData.about}</p>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="action-bar">
+          <button
+            className="action-btn nope"
+            disabled={isPending}
+            onClick={() => sendRequest({ status: 'ignored', userId: feedData._id })}
+            title="Pass"
+          >
+            ✕
+          </button>
+
+          <button
+            className="action-btn super-like"
+            disabled={isPending}
+            title="Super Like"
+            style={{ fontSize: '18px' }}
+          >
+            ⭐
+          </button>
+
+          <button
+            className="action-btn like"
+            disabled={isPending}
+            onClick={() => sendRequest({ status: 'interested', userId: feedData._id })}
+            title="Like"
+          >
+            ♥
+          </button>
+        </div>
+      </div>
+
+      {/* Keyboard hint */}
+      <div style={{ display: 'flex', gap: '24px', color: 'var(--text-muted)', fontSize: '12px' }}>
+        <span>← Pass</span>
+        <span>→ Like</span>
+      </div>
+    </div>
+  )
 }
 
 export default Feed

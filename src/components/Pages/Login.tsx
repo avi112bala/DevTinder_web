@@ -1,87 +1,140 @@
-import axios from "axios"
-import { useState } from "react"
-import { useDispatch } from "react-redux"
-import { addUser } from "../../utils/userSlice"
-import { useNavigate } from "react-router-dom"
-import { BASE_URL } from "../../utils/Baseurl"
+import { useState } from 'react'
+import { useLogin, useSignup } from '../../hooks/useApiHooks'
+import DevTinderLogo from '../DevTinderLogo'
 
 const Login = () => {
-    const [email, setEmail] = useState("sarvani@gmail.com")
-    const [password, setPassword] = useState("Dhoni@123456")
-    const [firstName, setFirstName] = useState("")
-    const [lastName, setLastName] = useState("")
-    const [isLogedIn, setIsLogedIn] = useState(false)
-    const dispatch = useDispatch()
-    const navigate = useNavigate()
+  const [email, setEmail] = useState('sarvani@gmail.com')
+  const [password, setPassword] = useState('Dhoni@123456')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [isLoginMode, setIsLoginMode] = useState(true)
 
+  const { mutate: login, isPending: isLoginPending } = useLogin()
+  const { mutate: signup, isPending: isSignupPending } = useSignup()
+  const isPending = isLoginPending || isSignupPending
 
-    const handleLogin = async () => {
-        try {
-            const res = await axios.post(`${BASE_URL}/login`, {
-                emailId: email,
-                password
-            },
-                { withCredentials: true })
-            if (res?.status === 200) {
-                dispatch(addUser(res?.data?.data))
-                navigate('/')
-            }
-        } catch (error) {
-            navigate('/login')
-            console.log(error)
-        }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (isLoginMode) {
+      login({ emailId: email, password })
+    } else {
+      signup({
+        firstName,
+        lastName,
+        emailId: email,
+        password,
+        photoUrl: 'https://cdn.vectorstock.com/i/500p/81/62/grey-business-avatar-placeholder-vector-38508162.jpg',
+      })
     }
+  }
 
-     const handleSignup = async () => {
-        try {
-            const res = await axios.post(
-              `${BASE_URL}/signup`,
-              {
-                firstName,
-                lastName,
-                emailId: email,
-                password,
-                photoUrl:
-                  "https://cdn.vectorstock.com/i/500p/81/62/grey-business-avatar-placeholder-vector-38508162.jpg",
-              },
-              { withCredentials: true },
-            );                
-            if (res?.status === 200) {
-                dispatch(addUser(res?.data?.data))
-                navigate('/profile')
-            }
-        } catch (error) {
-            navigate('/login')
-            console.log(error)
-        }
-    }
+  return (
+    <div className="auth-page">
+      <div className="auth-card">
+        {/* Logo */}
+        <div className="auth-logo">
+          <span style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+            <DevTinderLogo size={52} />
+          </span>
+          <h1 className="flame-text">DevTinder</h1>
+          <p>Connect with developers around the world</p>
+        </div>
 
-    return (
-        <>
-            <fieldset className="fieldset bg-white border-base-300 rounded-box w-xs border p-4 m-auto">
-                <label className="label justify-center text-black text-2xl">{isLogedIn ? "Login" : "Sign Up"}</label>
+        {/* Mode Tabs */}
+        <div className="auth-tabs">
+          <button
+            type="button"
+            className={`auth-tab${isLoginMode ? ' active' : ''}`}
+            onClick={() => setIsLoginMode(true)}
+          >
+            Sign In
+          </button>
+          <button
+            type="button"
+            className={`auth-tab${!isLoginMode ? ' active' : ''}`}
+            onClick={() => setIsLoginMode(false)}
+          >
+            Create Account
+          </button>
+        </div>
 
+        <form onSubmit={handleSubmit}>
+          {/* Sign-up only fields */}
+          {!isLoginMode && (
+            <div className="auth-name-row">
+              <div className="form-group">
+                <label>First Name</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Last Name</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+          )}
 
-                {!isLogedIn && <>
-                    <label className="label">First Name</label>
-                    <input type="text" className="input bg-red-100!" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              className="form-input"
+              placeholder="you@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-                    <label className="label">Last Name</label>
-                    <input type="text" className="input bg-red-100!" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-                </>}
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label>Password</label>
+            <input
+              type="password"
+              className="form-input"
+              placeholder="••••••••"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
-                <label className="label">Email</label>
-                <input type="email" className="input bg-red-100!" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <button type="submit" className="btn-flame" style={{ width: '100%' }} disabled={isPending}>
+            {isPending ? (
+              <>
+                <div className="flame-spinner" style={{ width: 18, height: 18, borderWidth: 2 }} />
+                {isLoginMode ? 'Signing in…' : 'Creating account…'}
+              </>
+            ) : (
+              isLoginMode ? 'Sign In' : 'Create Account'
+            )}
+          </button>
+        </form>
 
-                <label className="label">Password</label>
-                <input type="password" className="input bg-red-100!" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-
-                <button className="btn btn-neutral mt-4" onClick={() => isLogedIn?handleLogin():handleSignup()}>{isLogedIn ? "Login" : "Signup"}</button>
-
-                <p onClick={()=>setIsLogedIn((prev:any)=>!prev)} className="cursor-pointer">{isLogedIn?"New User?Create Account":"Existing User?Login"}</p>
-            </fieldset>
-        </>
-    )
+        <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: 'var(--text-muted)' }}>
+          {isLoginMode ? "Don't have an account? " : 'Already have an account? '}
+          <span
+            style={{ color: 'var(--flame-start)', fontWeight: 600, cursor: 'pointer' }}
+            onClick={() => setIsLoginMode(v => !v)}
+          >
+            {isLoginMode ? 'Create one' : 'Sign in'}
+          </span>
+        </p>
+      </div>
+    </div>
+  )
 }
 
 export default Login

@@ -1,61 +1,74 @@
-import axios from "axios";
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { addConnection } from "../../utils/connectionSlice";
-import { BASE_URL } from "../../utils/Baseurl";
+import { useSelector } from 'react-redux'
+import { useConnections } from '../../hooks/useApiHooks'
 
 const Connection = () => {
-    const dispatch = useDispatch()
-    const connectiondata = useSelector((store: any) => store.connection)
+  const connectiondata = useSelector((store: any) => store.connection)
+  const { isLoading, isError } = useConnections()
 
-    const allConnection = async () => {
-        try {
-            const res = await axios.get(`${BASE_URL}/user/connection`, {
-                withCredentials: true
-            })
-            console.log(res, "connectionres");
-            if (res?.status === 200) {
-                dispatch(addConnection(res?.data?.data))
-            }
-
-        } catch (error) {
-            console.log(error);
-
-        }
-    }
-
-    useEffect(() => {
-        allConnection()
-    }, [])
+  if (isLoading) {
     return (
-        <div className="w-1/2 m-auto gap-4 my-10 overflow-x-auto h-screen">
-            {
-                connectiondata?.map((item: any) => {
-                    return (
-                        <div key={item?._id} className="bg-base-100 shadow-sm flex justify-between p-5 items-center mb-5">
-                            <img
-                                src={item?.photoUrl}
-                                alt="Movie"
-                                className="w-25 h-25 rounded-full m-3"
-                            />
-                            <div className="text-start">
-                                <h2 className="card-title">{item?.firstName}</h2>
-                                <p>{item?.age}</p>
-                                <p>{item?.gender}</p>
-                               
-                            </div>
-                             <div className="card-actions justify-end">
-                                    <button className="btn btn-primary">Reject</button>
-                                    <button className="btn btn-secondary">Accept</button>
-                                </div>
-
-                        </div>
-                    )
-                })
-            }
-
-        </div>
+      <div className="loading-screen">
+        <div className="loading-text">Loading your matches…</div>
+      </div>
     )
+  }
+
+  if (isError) {
+    return (
+      <div className="empty-state" style={{ flex: 1, minHeight: 'calc(100dvh - 64px)' }}>
+        <div className="empty-state-icon">😕</div>
+        <div className="empty-state-title">Failed to load matches</div>
+        <div className="empty-state-sub">Please check your connection and try again</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="list-page">
+      <div className="section-badge">💬 Matches</div>
+      <div className="list-page-title">
+        <span className="flame-text">Your Matches</span>
+      </div>
+      <div className="list-page-subtitle">
+        {connectiondata?.length ?? 0} mutual {connectiondata?.length === 1 ? 'connection' : 'connections'}
+      </div>
+
+      {(!connectiondata || connectiondata.length === 0) ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">💔</div>
+          <div className="empty-state-title">No matches yet</div>
+          <div className="empty-state-sub">Keep swiping — your matches will appear here</div>
+        </div>
+      ) : (
+        connectiondata.map((item: any) => (
+          <div key={item._id} className="person-card">
+            <img
+              className="person-avatar"
+              src={item?.photoUrl ?? 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'}
+              alt={item?.firstName}
+            />
+            <div className="person-info">
+              <div className="person-name">{item?.firstName} {item?.lastName}</div>
+              <div className="person-meta">
+                {item?.age && <span>🎂 {item.age}</span>}
+                {item?.gender && <span>⚧ {item.gender}</span>}
+                {item?.about && (
+                  <span style={{ color: 'var(--text-muted)', fontSize: '12px', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
+                    {item.about}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="person-actions">
+              <button className="btn-flame" style={{ padding: '8px 18px', fontSize: '13px' }}>
+                💬 Message
+              </button>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  )
 }
 
 export default Connection

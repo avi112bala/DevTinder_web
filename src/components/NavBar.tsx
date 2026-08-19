@@ -1,101 +1,143 @@
-import axios from "axios";
-import { useDispatch, useSelector } from "react-redux"
-import { Link, useNavigate } from "react-router-dom";
-import { addUser, removeUser } from "../utils/userSlice";
-import { removeFeed } from "../utils/feedSlice";
-import { useEffect } from "react";
-import { BASE_URL } from "../utils/Baseurl";
+import { Link, useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import { useLogout, useNavProfile } from '../hooks/useApiHooks'
+import { useDispatch } from 'react-redux'
+import { addUser } from '../utils/userSlice'
+import { useEffect, useState, useRef } from 'react'
+import DevTinderLogo from './DevTinderLogo'
 
 const NavBar = () => {
-    const user = useSelector((store: any) => store.user)
-    const dispatch = useDispatch()
-    const Navigate = useNavigate()
+  const user = useSelector((store: any) => store.user)
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
-    const logout = async () => {
-        try {
-            const res = await axios.post(`${BASE_URL}/logout`, null, {
-                withCredentials: true
-            })
-            if (res?.status === 200) {
-                dispatch(removeUser())
-                dispatch(removeFeed())
-                Navigate("/login")
-            }
-        } catch (error) {
-            console.log(error)
-        }
+  const { data: profileData } = useNavProfile()
+  const { mutate: logout, isPending: isLoggingOut } = useLogout()
 
+  useEffect(() => {
+    if (profileData) dispatch(addUser(profileData))
+  }, [profileData, dispatch])
+
+  // Close menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
     }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
-    const handleclick = () => {
-        if (user) {
-            Navigate("/")
-        } else {
-            Navigate("/login")
-        }
-    }
+  const navLinks = [
+    { to: '/', icon: null, label: 'Discover' },
+    { to: '/connection', icon: '💬', label: 'Matches' },
+    { to: '/request', icon: '⭐', label: 'Requests' },
+    { to: '/profile', icon: '👤', label: 'Profile' },
+  ]
 
-    const fetchUSer = async () => {
-        try {
-            const res = await axios.get(`${BASE_URL}/profile`, {
-                withCredentials: true
-            })
-            if (res?.status === 200) {
-                dispatch(addUser(res?.data?.data))
-            }
-        } catch (error) {
-            console.log(error);
-            Navigate("/login")
-        }
-    }
+  return (
+    <nav className="tinder-navbar">
+      {/* Logo */}
+      <div className="logo" onClick={() => navigate(user ? '/' : '/login')}>
+        <DevTinderLogo size={30} />
+        <span className="flame-text">DevTinder</span>
+      </div>
 
-    useEffect(() => {
-        fetchUSer()
-    }, [])
-    return (
-        <>
-            <div className="navbar bg-neutral shadow-sm">
-                <div className="flex-1 cursor-pointer" onClick={handleclick}>
-                    Dev Tinder
+      {/* Center nav links (desktop) */}
+      {user && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {navLinks.map(({ to, icon, label }) => (
+            <Link
+              key={to}
+              to={to}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '2px',
+                padding: '6px 14px',
+                borderRadius: '12px',
+                textDecoration: 'none',
+                fontSize: '11px',
+                fontWeight: '600',
+                color: 'var(--text-muted)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget
+                el.style.background = 'var(--bg-glass)'
+                el.style.color = 'var(--text-primary)'
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget
+                el.style.background = 'transparent'
+                el.style.color = 'var(--text-muted)'
+              }}
+            >
+              <span style={{ fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {icon === null ? <DevTinderLogo size={20} /> : icon}
+              </span>
+              <span>{label}</span>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Right side */}
+      <div className="nav-actions">
+        {user ? (
+          <>
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>
+              {user.firstName}
+            </span>
+            <div className="tinder-dropdown" ref={menuRef}>
+              <img
+                className="nav-avatar"
+                src={user?.photoUrl ?? 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'}
+                alt="avatar"
+                onClick={() => setMenuOpen(v => !v)}
+              />
+              <div className={`tinder-dropdown-menu${menuOpen ? ' open' : ''}`}>
+                {/* User info header */}
+                <div style={{ padding: '10px 12px 8px', borderBottom: '1px solid var(--border-subtle)', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{user.firstName} {user.lastName}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{user.emailId}</div>
                 </div>
-                <div className="flex gap-2 items-center justify-center">
-                    <p>Welcome {user?.firstName}</p>
-                    <div className="dropdown dropdown-end mx-3">
-                        <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
 
-                            <div className="w-10 rounded-full">
-                                <img
-                                    alt="Tailwind CSS Navbar component"
-                                    src={user?.photoUrl ?? "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"} />
-                            </div>
-                        </div>
-                        <ul
-                            className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-                            <li>
-                                <Link to={"/profile"} className="justify-between">
-                                    Profile
-                                </Link>
-                            </li> 
-
-                            <li>
-                                <Link to={"/connection"} className="justify-between">
-                                    Connections
-                                </Link>
-                            </li>
-                             <li>
-                                <Link to={"/request"} className="justify-between">
-                                    Request
-                                </Link>
-                            </li>
-                            <li className="flex items-start cursor-pointer">
-                                <button onClick={logout}>Logout</button>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+                <Link to="/profile" className="dropdown-item" onClick={() => setMenuOpen(false)}>
+                  <span>👤</span> My Profile
+                </Link>
+                <Link to="/connection" className="dropdown-item" onClick={() => setMenuOpen(false)}>
+                  <span>💬</span> Matches
+                </Link>
+                <Link to="/request" className="dropdown-item" onClick={() => setMenuOpen(false)}>
+                  <span>⭐</span> Requests
+                </Link>
+                <Link to="/primium" className="dropdown-item" onClick={() => setMenuOpen(false)}>
+                  <span>👑</span> <span>Premium <span className="premium-badge" style={{ marginLeft: 4 }}>GOLD</span></span>
+                </Link>
+                <div className="dropdown-divider" />
+                <button
+                  className="dropdown-item danger"
+                  disabled={isLoggingOut}
+                  onClick={() => { setMenuOpen(false); logout() }}
+                >
+                  <span>🚪</span> {isLoggingOut ? 'Logging out…' : 'Sign Out'}
+                </button>
+              </div>
             </div>
-        </>
-    )
+          </>
+        ) : (
+          <button className="btn-flame" style={{ padding: '8px 20px', fontSize: '14px' }} onClick={() => navigate('/login')}>
+            Sign In
+          </button>
+        )}
+      </div>
+    </nav>
+  )
 }
 
 export default NavBar

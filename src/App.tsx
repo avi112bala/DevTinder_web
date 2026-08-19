@@ -7,13 +7,24 @@ import appStore from './utils/appStore'
 import Profile from './components/Pages/Profile'
 import Connection from './components/Pages/Connection'
 import RequestReceive from './components/Pages/RequestReceive'
- import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-function App() {
- 
-  const queryClient = new QueryClient();
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from 'sonner'
+import Primium from './components/Pages/Primium'
 
+// Create QueryClient outside component so it is not recreated on every render
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+})
+
+function App() {
   return (
     <>
+      <Toaster richColors position="top-right" />
       <QueryClientProvider client={queryClient}>
         <Provider store={appStore}>
           <BrowserRouter basename="/">
@@ -30,13 +41,14 @@ function App() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/connection" element={<Connection />} />
                 <Route path="/request" element={<RequestReceive />} />
+                <Route path="/primium" element={<Primium />} />
               </Route>
             </Routes>
           </BrowserRouter>
         </Provider>
       </QueryClientProvider>
     </>
-  );
+  )
 }
 
 export default App

@@ -1,74 +1,99 @@
-import axios from "axios";
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { addRequest, removeRequest } from "../../utils/requestSlice";
-import { BASE_URL } from "../../utils/Baseurl";
+import { useSelector } from 'react-redux'
+import { useReceivedRequests, useReviewConnectionRequest } from '../../hooks/useApiHooks'
 
 const RequestReceive = () => {
-    const dispatch = useDispatch()
-    const connectiondata = useSelector((store: any) => store.request)
+  const connectiondata = useSelector((store: any) => store.request)
+  const { isLoading, isError } = useReceivedRequests()
+  const { mutate: reviewRequest, isPending } = useReviewConnectionRequest()
 
-    const allConnection = async () => {
-        try {
-            const res = await axios.get(`${BASE_URL}/users/request/received`, {
-                withCredentials: true
-            })            
-            if (res?.status === 200) {
-                dispatch(addRequest(res?.data?.data))
-            }
-
-        } catch (error) {
-            console.log(error);
-        }
-    }
-
-    const connectionacceptreject=async(status:any,_id:any)=>{
-      try {
-          const res =await axios.post(`${BASE_URL+"/request/review/"+status+"/"+_id}`,{},{
-            withCredentials:true
-        })
-        if(res?.status===200){
-            dispatch(removeRequest(_id))
-        }
-
-      } catch (error) {
-        console.log(error)
-      }
-        
-    }
-
-    useEffect(() => {
-        allConnection()
-    }, [])
+  if (isLoading) {
     return (
-        <div className="w-1/2 m-auto gap-4 my-10 overflow-x-auto h-screen">
-            {
-                connectiondata?.map((item: any) => {
-                    return (
-                        <div key={item?._id} className="bg-base-100 shadow-sm flex justify-between p-5 items-center mb-4">
-                            <img
-                                src={item?.fromUserId?.photoUrl}
-                                alt="Movie"
-                                className="w-25 h-25 rounded-full m-3"
-                            />
-                            <div className="text-start">
-                                <h2 className="card-title">{item?.fromUserId?.firstName}</h2>
-                                <p>{item?.fromUserId?.age}</p>
-                                <p>{item?.fromUserId?.gender}</p>
-                               
-                            </div>
-                             <div className="card-actions justify-end">
-                                    <button className="btn btn-primary" onClick={()=>connectionacceptreject("rejected",item?._id)}>Reject</button>
-                                    <button className="btn btn-secondary" onClick={()=>connectionacceptreject("accepted",item?._id)}>Accept</button>
-                                </div>
-
-                        </div>
-                    )
-                })
-            }
-
-        </div>
+      <div className="loading-screen">
+        <div className="loading-text">Loading requests…</div>
+      </div>
     )
+  }
+
+  if (isError) {
+    return (
+      <div className="empty-state" style={{ flex: 1, minHeight: 'calc(100dvh - 64px)' }}>
+        <div className="empty-state-icon">😕</div>
+        <div className="empty-state-title">Failed to load requests</div>
+        <div className="empty-state-sub">Please check your connection and try again</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="list-page">
+      <div className="section-badge">⭐ Requests</div>
+      <div className="list-page-title">
+        <span className="flame-text">Connection Requests</span>
+      </div>
+      <div className="list-page-subtitle">
+        {connectiondata?.length ?? 0} pending {connectiondata?.length === 1 ? 'request' : 'requests'}
+      </div>
+
+      {(!connectiondata || connectiondata.length === 0) ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">📬</div>
+          <div className="empty-state-title">No pending requests</div>
+          <div className="empty-state-sub">When someone swipes right on you, they'll show up here</div>
+        </div>
+      ) : (
+        connectiondata.map((item: any) => {
+          const from = item?.fromUserId
+          return (
+            <div key={item._id} className="person-card">
+              <img
+                className="person-avatar"
+                src={from?.photoUrl ?? 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'}
+                alt={from?.firstName}
+              />
+              <div className="person-info">
+                <div className="person-name">{from?.firstName} {from?.lastName}</div>
+                <div className="person-meta">
+                  {from?.age && <span>🎂 {from.age}</span>}
+                  {from?.gender && <span>⚧ {from.gender}</span>}
+                  {from?.about && (
+                    <span style={{
+                      color: 'var(--text-muted)',
+                      fontSize: '12px',
+                      fontStyle: 'italic',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '180px'
+                    }}>
+                      {from.about}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="person-actions">
+                <button
+                  className="btn-outline-flame"
+                  style={{ padding: '8px 16px', fontSize: '13px' }}
+                  disabled={isPending}
+                  onClick={() => reviewRequest({ status: 'rejected', requestId: item._id })}
+                >
+                  ✕ Pass
+                </button>
+                <button
+                  className="btn-flame"
+                  style={{ padding: '8px 16px', fontSize: '13px' }}
+                  disabled={isPending}
+                  onClick={() => reviewRequest({ status: 'accepted', requestId: item._id })}
+                >
+                  ♥ Accept
+                </button>
+              </div>
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
 }
 
 export default RequestReceive
