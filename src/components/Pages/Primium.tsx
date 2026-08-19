@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Award, Crown, Gem } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiService } from "../../api/apiservices";
 import { toast } from "sonner";
 
@@ -186,45 +186,48 @@ function TierCard({ tier, featured, onChoose, isLoading }: TierCardProps) {
 }
 
 export default function Primium() {
+  const { data: verifyData, refetch } = useQuery({
+    queryKey: ["verify"],
+    queryFn: () => apiService.get("/payment/verify"),
+    retry: false,
+  });
+
+  const verifyResult: any = verifyData;
+  const isPremium = verifyResult?.isPremium ?? verifyResult?.data?.isPremium ?? false;
+  const membershipType = verifyResult?.membershipType ?? verifyResult?.data?.membershipType ?? "gold";
+
   const { mutate: createOrder, isPending, variables } = useMutation({
     mutationFn: ({ membershipType, price }: { membershipType: string; price: number }) =>
       apiService.post({
         url: "/payment/create-order",
         payload: { membershipType, price },
       }),
-    onSuccess: (data: any) => {
+    onSuccess: (orderData: any) => {
       toast.success(
-        data?.message ?? "Order created! Redirecting to payment…",
+        orderData?.message ?? "Order created! Redirecting to payment…",
         { position: "top-right" }
       );
-      // TODO: integrate Razorpay / payment gateway here using data.orderId
-      console.log("Payment order response:", data);
+      console.log("Payment order response:", orderData);
       const options = {
-        key: data?.keyId,
-        amount: data.amount, // in paise
-        currency: data.currency,
+        key: orderData?.keyId,
+        amount: orderData.amount, // in paise
+        currency: orderData.currency,
         name: "DevTinder",
         description: "Premium Membership",
         image: "/logo.png",
-        order_id: data.id,
-        // handler: function (response: any) {
-        //   // payment successful - call API to verify
-        //   console.log(response);
-        //   axios.post("/payment/verify", {
-        //     response,
-        //     orderId: data.id,
-        //     membershipType: data.membershipType,
-        //   })
-        //     .then(() => toast.success("Payment successful!"))
-        //     .catch(() => toast.error("Payment verification failed"));
-        // },
-        prefill: {
-          name: data.notes.firstName + ' ' + data.notes.lastName,
-          email: data.notes.email,
-          contact: "9999999999"
+        order_id: orderData.id,
+        handler: (response: any) => {
+          console.log("Payment successful:", response);
+          toast.success("Payment successful!");
+          refetch();
         },
-        notes: data?.notes,
-        theme: { color: "#333333" }
+        prefill: {
+          name: (orderData.notes?.firstName ?? "") + " " + (orderData.notes?.lastName ?? ""),
+          email: orderData.notes?.email ?? "",
+          contact: "9999999999",
+        },
+        notes: orderData?.notes,
+        theme: { color: "#333333" },
       };
       const rzp = new window.Razorpay(options);
       rzp.open();
@@ -235,6 +238,65 @@ export default function Primium() {
       toast.error(msg, { position: "top-right" });
     },
   });
+
+  const checkhandlepaymentverify = () => {
+    refetch();
+  }
+
+  useEffect(() => {
+    checkhandlepaymentverify()
+  }, [])
+
+  if (isPremium) {
+    return (
+      <div
+        className="w-full min-h-screen flex items-center justify-center p-8"
+        style={{ background: "#15171B" }}
+      >
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&display=swap');`}</style>
+        <div className="w-full max-w-md bg-neutral-900/90 border border-amber-500/30 rounded-3xl p-8 text-center backdrop-blur-xl shadow-2xl relative overflow-hidden">
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-yellow-500/20 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center shadow-lg shadow-amber-500/30">
+            <Crown className="w-10 h-10 text-neutral-950" />
+          </div>
+
+          <span className="inline-block px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-amber-500/10 text-amber-400 border border-amber-500/30 mb-4">
+            Active Membership
+          </span>
+
+          <h2 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "'Fraunces', serif" }}>
+            You're a {membershipType.charAt(0).toUpperCase() + membershipType.slice(1)} Member!
+          </h2>
+
+          <p className="text-neutral-400 text-sm mb-6">
+            Thank you for subscribing. You now have full access to all premium features on DevTinder.
+          </p>
+
+          <div className="bg-neutral-800/60 rounded-2xl p-4 border border-neutral-700/50 mb-6 text-left space-y-2 text-sm text-neutral-300">
+            <div className="flex items-center justify-between">
+              <span className="text-neutral-400">Status</span>
+              <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                <Check className="w-4 h-4" /> Active
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-neutral-400">Tier</span>
+              <span className="font-semibold text-amber-300 capitalize">{membershipType}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => (window.location.href = "/feed")}
+            className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-amber-500 to-yellow-400 text-neutral-950 hover:opacity-90 transition-opacity shadow-lg shadow-amber-500/20"
+          >
+            Explore DevTinder
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
