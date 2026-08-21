@@ -1,5 +1,6 @@
 import { useSelector } from 'react-redux'
 import { useConnections } from '../../hooks/useApiHooks'
+import { Link } from 'react-router-dom'
 
 const Connection = () => {
   const connectiondata = useSelector((store: any) => store.connection)
@@ -60,9 +61,11 @@ const Connection = () => {
               </div>
             </div>
             <div className="person-actions">
-              <button className="btn-flame" style={{ padding: '8px 18px', fontSize: '13px' }}>
-                💬 Message
-              </button>
+              <Link to={`/chat/${item._id}`}>
+                <button className="btn-flame" style={{ padding: '8px 18px', fontSize: '13px' }}>
+                  💬 Message
+                </button>
+              </Link>
             </div>
           </div>
         ))

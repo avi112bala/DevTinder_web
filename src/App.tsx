@@ -10,6 +10,7 @@ import RequestReceive from './components/Pages/RequestReceive'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import Primium from './components/Pages/Primium'
+import Chat from './components/Pages/Chat'
 
 // Create QueryClient outside component so it is not recreated on every render
 const queryClient = new QueryClient({
@@ -42,6 +43,7 @@ function App() {
                 <Route path="/connection" element={<Connection />} />
                 <Route path="/request" element={<RequestReceive />} />
                 <Route path="/primium" element={<Primium />} />
+                <Route path="/chat/:id" element={<Chat />} />
               </Route>
             </Routes>
           </BrowserRouter>
