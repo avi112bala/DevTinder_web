@@ -102,6 +102,7 @@ const Chat = () => {
         }
 
         const handleMessageReceived = ({ firstName, text }: any) => {
+            console.log(firstName,"firstName")
             setMessages((prev) => [
                 ...prev,
                 {
