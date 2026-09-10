@@ -6,6 +6,7 @@ import { addUser, removeUser } from '../utils/userSlice';
 import { addfeed, removeFeed, removeprevFeed } from '../utils/feedSlice';
 import { addConnection } from '../utils/connectionSlice';
 import { addRequest, removeRequest } from '../utils/requestSlice';
+import Cookies from "js-cookie"
 import {
   loginApi,
   signupApi,
@@ -42,10 +43,16 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: (payload: LoginPayload) => loginApi(payload),
     onSuccess: (data: any) => {
-      // Clear stale cached query errors from before login so feed/profile
-      // hooks don't immediately see a cached 401 and redirect back to /login
       queryClient.clear();
-      dispatch(addUser(data?.data ?? data));
+      dispatch(addUser(data?.data ?? data?.data?.userWithoutPassword));
+      const token = data?.data?.token
+      if (token) {
+        Cookies.set('token', token, {
+          expires: 1,
+          secure: true,
+          sameSite: 'strict',
+        });
+      }
       navigate('/');
     },
     // Do NOT navigate on error – the form stays visible and shows the toast
@@ -92,12 +99,13 @@ export const useLogout = () => {
 /** Used on the /profile page – redirects on 401 via useEffect */
 export const useProfile = () => {
   const navigate = useNavigate();
-
+  const token = Cookies.get('token');
   const query = useQuery<any>({
     queryKey: QUERY_KEYS.profile,
     queryFn: () => fetchProfileApi(),
     retry: false,
     select: (data: any) => data?.data ?? data,
+    enabled: !!token
   });
 
   // Redirect to login only when the query definitively errors with 401
@@ -113,13 +121,14 @@ export const useProfile = () => {
 /** Used in NavBar – shares the same cache key as useProfile */
 export const useNavProfile = () => {
   const dispatch = useDispatch();
+  const token = Cookies.get('token');
 
   const query = useQuery<any>({
     queryKey: QUERY_KEYS.profile,
     queryFn: () => fetchProfileApi(),
     retry: false,
     select: (data: any) => data?.data ?? data,
-    // No navigate here – NavBar should not redirect; let Body/pages handle it
+    enabled:!!token
   });
 
   // Sync fetched user into Redux so NavBar and other consumers stay in sync
@@ -156,6 +165,7 @@ export const useUpdateProfile = () => {
 export const useFeed = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const token = Cookies.get('token');
 
   const query = useQuery<any[]>({
     queryKey: QUERY_KEYS.feed,
@@ -166,6 +176,7 @@ export const useFeed = () => {
       return feedItems;
     },
     retry: false,
+    enabled:!!token
   });
 
   // Redirect on 401 via effect (not during render)
